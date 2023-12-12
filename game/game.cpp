@@ -8,14 +8,19 @@
 
 struct PERSON
 {
-    PERSON()                   // конструктор по умолчанию
+    PERSON()                                             // конструктор по умолчанию
     {
         name = "Enemy #";
-        health = 0;
+        health = 1;
         armor = 0;
         damage = 0;
         x = 0;
         y = 0;
+        life = true;
+        if (health < 1)                                  // если жизней меньше 1 , то персонаж умер
+        {
+            life = false;
+        }
     }
     
 
@@ -25,14 +30,16 @@ struct PERSON
     int damage;
     int x;
     int y;
-    int move;                     // переменная - передвижение.
+    int move;                                            // переменная - передвижение.
+    bool life;                                           // жив ли персонаж
+   
 
     void Get()
     {
-        std::cout << "name: " << name << "\nhealth: " << health << "\narmor:" << armor << "\ndamage: " << damage << "\ncoordinates: " << x << ',' << y << std::endl;
+        std::cout << "name: " << name << "\nhealth: " << health << "\narmor:" << armor << "\ndamage: " << damage << "\ncoordinates: " << x << ',' << y << "\nLIFE: "<< life<< std::endl;
     }
 };
-void FILLING(char Game_field[][20])            // Заполнение игрового поля точками(ОБНУЛЕНИЕ КАРТИНКИ) ! очень часто используемая функция
+void FILLING(char Game_field[][20])                      // Заполнение игрового поля точками(ОБНУЛЕНИЕ КАРТИНКИ) ! очень часто используемая функция
 {
     for (int i = 0; i < 20; ++i)          
     {
@@ -43,13 +50,20 @@ void FILLING(char Game_field[][20])            // Заполнение игро�
     }
 }
 
-void LOAD_INFO_FIELD(char Game_field[][20],PERSON hero, PERSON  enemy)     // загрузка информации о нахождении героя и врагов в поле  
+void LOAD_INFO_FIELD(char Game_field[][20],PERSON Player[]) // загрузка информации о нахождении героя и врагов в поле  
 {
-    Game_field[hero.y][hero.x] = 'P';                // первая переменная  у вторая х для более привычных координат
-    Game_field[enemy.y][enemy.x] = 'E';
+    Game_field[Player[0].y][Player[0].x] = 'P';          // первая переменная  у вторая х для более привычных координат
+
+    for(int i = 1 ; i < 6 ; i++)
+    {
+        if(Player[i].life)
+        {
+            Game_field[Player[i].y][Player[i].x] = 'E';     // картинка врагов
+        }
+    }
 };
 
-void DISPLAY_FIELD(char Game_field[][20])            // (КАРТИНКА) вывод игрового поля на экран
+void DISPLAY_FIELD(char Game_field[][20])               // (КАРТИНКА) вывод игрового поля на экран
 {
     for (int i = 0; i < 20; ++i)
     {
@@ -61,21 +75,21 @@ void DISPLAY_FIELD(char Game_field[][20])            // (КАРТИНКА) вы�
     }
 };
 
-void REPLACEMENT(char move_char, int& dvijenie)                            // функция перемещения меняет буквы на цифры лдя дальнейшего перемещения
+void REPLACEMENT(char move_char, PERSON Player[])      // функция перемещения меняет буквы на цифры лдя дальнейшего перемещения
 {
     switch (move_char)
     {
-    case 'u':
-        dvijenie = 0;
+    case 'w':
+       Player[6].move = 0;
+        break;
+    case 's':
+        Player[6].move = 2;
+        break;
+    case 'a':
+        Player[6].move = 1;
         break;
     case 'd':
-        dvijenie = 2;
-        break;
-    case 'l':
-        dvijenie = 1;
-        break;
-    case 'r':
-        dvijenie = 3;
+        Player[6].move = 3;
         break;
     default:
         std::cout << "Неверная команда передвижения";
@@ -83,113 +97,204 @@ void REPLACEMENT(char move_char, int& dvijenie)                            // ф
     }
 }
 
-void MOVEMENT(int dvijenie, char Game_field[][20],PERSON& hero,PERSON enemy)  // это пока тестовая версия.. возможно враги и не понадобятся сюда передавать.. 
+void MOVEMENT(PERSON Player[])  // ПЕРЕДВИЖЕНИЕ ПЕРСОНАЖЕЙ 
 {
-    switch (dvijenie)
+    for (int i = 0; i < 7; i++)
     {
-    case 0:
-        hero.y--;
-        if (hero.y < 0)
+        switch (Player[i].move)
         {
-            hero.y = 0;
-        }
-        FILLING(Game_field);                               //обнуление картинки
-        LOAD_INFO_FIELD(Game_field, hero, enemy);        // новые актуальные данные
-        break; 
+        case 0:
+            Player[i].y--;
+            if (Player[i].y < 0)
+            {
+                Player[i].y = 0;
+            }
+            Player[i].move = 4;   // ЧЕ НАПИСАЛ?? ЗАЧЕМ ЭТО ?? Я НЕ ПОМНЮ... АА.. чтобы персонаж делал один ход!!!!
+            break;
 
-    case 1:
-        hero.x--;
-        if (hero.x < 0)
-        {
-            hero.x = 0;
-        }
-        FILLING(Game_field);
-        LOAD_INFO_FIELD(Game_field, hero, enemy);
-        break;
+        case 1:
+            Player[i].x--;
+            if (Player[i].x < 0)
+            {
+                Player[i].x = 0;
+            }
+            Player[i].move = 4;
+            break;
 
-    case 2:
-        hero.y++;
-        if (hero.y > 19)
-        {
-            hero.y = 19;
-        }
-        FILLING(Game_field);
-        LOAD_INFO_FIELD(Game_field, hero, enemy);
-        break;
+        case 2:
+            Player[i].y++;
+            if (Player[i].y > 19)
+            {
+                Player[i].y = 19;
+            }
+            Player[i].move = 4;
+            break;
 
-    case 3:
-        hero.x++;
-        if (hero.x > 19)
-        {
-            hero.x = 19;
+        case 3:
+            Player[i].x++;
+            if (Player[i].x > 19)
+            {
+                Player[i].x = 19;
+            }
+            Player[i].move = 4;
+            break;
+        case 4:                                       // case 4  - если персонаж наткнется на другого и произойдет удар, он должен оставаться на месте. 
+            break;
         }
-        FILLING(Game_field);
-        LOAD_INFO_FIELD(Game_field, hero, enemy);
-        break;
+    }
+     
+    
+}
+
+void Kartinka(char Game_field[][20], PERSON Player[])
+{
+    FILLING(Game_field);                            //обнуление картинки
+    LOAD_INFO_FIELD(Game_field, Player);            // новые актуальные данные
+    DISPLAY_FIELD(Game_field);                      // вывод поля на экран ( показ картинки)
+}
+
+void ENEMY_MOVE(PERSON Player[])                    //перемещение врагов
+{
+    for (int i = 1; i < 6; i++)
+    {
+        if (Player[i].life)                         // если персонаж жив                            
+        {
+            Player[6] = Player[i];
+            Player[6].move = rand() % 4;
+            // сюда вставляем перемещение
+            MOVEMENT( Player);                    // передвижение персонажa
+
+
+            if ((Player[0].x - Player[6].x == 0) && (Player[0].y - Player[6].y == 0))
+            {
+                Player[0].armor -= Player[6].damage;
+                if (Player[0].armor < 0)
+                {
+                    Player[0].health += Player[0].armor;
+                    Player[0].armor = 0;
+                    if (Player[0].health < 1)
+                    {
+                        Player[0].life = false;
+                    }
+                }
+            }
+            else
+            {
+                Player[i] = Player[6];
+            }
+        }
     }
 }
+
+void HERO_DAMAGE(PERSON Player[])
+{
+    for (int i = 1; i < 6; i++)
+    {
+        if (Player[i].life)
+        {
+            if ((Player[6].x - Player[i].x == 0) && (Player[6].y - Player[i].y == 0))    // если герой и враг сблизились, наносится урон
+            {
+                Player[i].armor -= Player[6].damage;
+                if (Player[i].armor < 0)
+                {
+                    Player[i].health += Player[i].armor;
+                    Player[i].armor = 0;
+                    if (Player[i].health < 1)
+                    {
+                        Player[i].life = false;                                          // если жизней меньше 1 , персонаж умирает
+                    }
+                }
+                return;                                                                  // если сближение произошло выходим из функции
+            }
+        }     
+    }
+    Player[0] = Player[6];                                                           // если персонажи не сблизились, то временная переменная передает герою координаты передвижения, и он ходит
+}
+
 
 int main()
 {
     setlocale(LC_ALL, "RUS");
-    srand(time(NULL));        // для генерации случайных чисел
+    srand(time(NULL));                               // для генерации случайных чисел
 
-    PERSON Enemies[5];        // массив-хранение  врагов
-    PERSON hero;              // персонаж игрока
-    char Game_field[20][20];  // игровое поле 20 на 20 для вывода на экран
-    int dvijenie;             // внутренняя переменная для движения
+    PERSON Player[7];                                // массив-хранение  врагов  0 - ГЛАВНЫЙ ГЕРОЙ , 6 - ВРЕМЕННАЯ ФИГУРА   1-5 ВРАГИ
     
-    FILLING(Game_field);      // заполнение игрового поля
-    
-    
-    // создам одного врага
-    PERSON enemy;
-    enemy.name += std::to_string(1);
-    enemy.armor = rand() % 51;
-    enemy.health = rand() % 101 + 50;
-    enemy.damage = rand() % 16 + 15;
-    enemy.x = rand() % 20;
-    enemy.y = rand() % 20;
-
+    char Game_field[20][20];                         // игровое поле 20 на 20 для вывода на экран
+  
     std::cout << " Давайте приступим к созданию героя!\n";
 
-    hero.x = rand() % 20;
-    hero.y = rand() % 20;
+    Player[0].x = rand() % 20;
+    Player[0].y = rand() % 20;
 
-    LOAD_INFO_FIELD(Game_field, hero, enemy);          //загрузка координат героя в карту
+     std::cout << "Введите имя персонажа: ";
+     std::cin >> Player[0].name;
 
-   /* std::cout << "Введите имя персонажа: ";
-    std::cin >> hero.name;
+     std::cout << "Введите количество жизней персонажа: ";
+     std::cin >> Player[0].health;
 
-    std::cout << "Введите количество жизней персонажа: ";
-    std::cin >> hero.health;
+     std::cout << " Введите количество брони: ";
+     std::cin >> Player[0].armor;
 
-    std::cout << " Введите количество брони: ";
-    std::cin >> hero.armor;
+     std::cout << "Введите урон персонажа: ";
+     std::cin >> Player[0].damage;
 
-    std::cout << "Введите урон персонажа: ";
-    std::cin >> hero.damage;*/
-    enemy.Get();
-    hero.Get();                     // тестовый вывод персонажа
-    DISPLAY_FIELD(Game_field);    // вывод поля на экран
-
+    // создаем  врагов
     
-
-    char move_char;                                // символ перемещения
+    for(int i = 1 ;i < 6; i++)
+    {
+        Player[i].name += std::to_string(i);
+        Player[i].armor = rand() % 51;
+        Player[i].health = rand() % 101 + 50;
+        Player[i].damage = rand() % 16 + 15;
+        Player[i].x = rand() % 20;
+        Player[i].y = rand() % 20;
+    }
+    Kartinka(Game_field, Player);                      // вывод поля на экран ( показ картинки)
+     
+    while (Player[0].life || (Player[1].life && Player[2].life && Player[3].life && Player[4].life && Player[5].life))  // игра началась
+{
+    char move_char;                                  // символ перемещения
     std::cout << " введи передвижение: ";
-    std::cin >> move_char;
+    std::cin >> move_char;                           // ввод перемещения героя
 
-    REPLACEMENT(move_char,dvijenie);                   // заполняем переменную dvijenie  REPLACEMENT - замена  (буквы на цифру)
+    Player[6] = Player[0];                           // приравниваем временного персонажа к герою
+    REPLACEMENT(move_char, Player);                  // заполняем переменную Player[6].move  REPLACEMENT - замена  (буквы на цифру)
+    MOVEMENT(Player);                               // передвижение персонажей
+    HERO_DAMAGE(Player);                             // проверка на сближение и нанесение урона
+   
+    ENEMY_MOVE(Player);                              //  создаем случайное  перемещение врагов и тут же  передвижение и урон 
+    MOVEMENT( Player);                               // передвижение персонажей
+  
+    Player[0].Get();
+    std::cout << std::endl;
+    Player[1].Get();
+    std::cout << std::endl;
+    Player[2].Get();
+    std::cout << std::endl;
+    Player[3].Get();
+    std::cout << std::endl;
+    Player[4].Get();
+    std::cout << std::endl;
+    Player[5].Get();
+    std::cout << std::endl;
 
-    MOVEMENT(dvijenie, Game_field, hero, enemy);
-
-    //std::cout << dvijenie;         // тестовый вывод цифры движения
-
-    hero.Get();                      // тестовый вывод персонажа
+    Kartinka(Game_field, Player);
     
-
-    DISPLAY_FIELD(Game_field);    // вывод поля на экран
+    std::cout << std::endl;
 }
+if (Player[0].life)
+{
+    std::cout << "YOU Win!";
+}
+else
+{
+    std::cout << "You LOSE!!!";
+}
+}
+
+
+
+
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
 // Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
