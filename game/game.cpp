@@ -4,7 +4,7 @@
 #include <iostream>
 #include <ctime>
 #include <string>
-
+#include <fstream>
 
 struct PERSON
 {
@@ -16,6 +16,7 @@ struct PERSON
         damage = 0;
         x = 0;
         y = 0;
+        move = 4;
         life = true;
         if (health < 1)                                  // если жизней меньше 1 , то персонаж умер
         {
@@ -34,7 +35,7 @@ struct PERSON
     bool life;                                           // жив ли персонаж
    
 
-    void Get()
+    void Get() const
     {
         std::cout << "name: " << name << "\nhealth: " << health << "\narmor:" << armor << "\ndamage: " << damage << "\ncoordinates: " << x << ',' << y << "\nLIFE: "<< life<< std::endl;
     }
@@ -75,9 +76,10 @@ void DISPLAY_FIELD(char Game_field[][20])               // (КАРТИНКА) в
     }
 };
 
-void REPLACEMENT(char move_char, PERSON Player[])      // функция перемещения меняет буквы на цифры лдя дальнейшего перемещения
+void REPLACEMENT(char* move_char, PERSON Player[])      // функция перемещения меняет буквы на цифры лдя дальнейшего перемещения
 {
-    switch (move_char)
+
+    switch (move_char[0])
     {
     case 'w':
        Player[6].move = 0;
@@ -211,9 +213,82 @@ void HERO_DAMAGE(PERSON Player[])
     Player[0] = Player[6];                                                           // если персонажи не сблизились, то временная переменная передает герою координаты передвижения, и он ходит
 }
 
+void save(std::string path, PERSON Player[])
+{
+    std::ofstream w_file(path, std::ios::binary | std::ios::out); // запись в бинарный файл
+    if (!w_file.is_open())
+    {
+        std::cerr << "FILE IS NOT OPEN!";
+        return;
+    }
+    for (int i = 0; i < 7; i++)
+    {
+        int len = Player[i].name.length();
+        w_file.write((char*)&len, sizeof(int));
+        w_file.write(Player[i].name.c_str(), len);
+
+        w_file.write((char*)&Player[i].health, sizeof(Player[i].health));
+
+        w_file.write((char*)&Player[i].armor, sizeof(Player[i].armor));
+
+        w_file.write((char*)&Player[i].damage, sizeof(Player[i].damage));
+
+        w_file.write((char*)&Player[i].x, sizeof(Player[i].x));
+
+        w_file.write((char*)&Player[i].y, sizeof(Player[i].y));
+
+        w_file.write((char*)&Player[i].move, sizeof(Player[i].move));
+
+        w_file.write(reinterpret_cast<char*>(&Player[i].life), sizeof(Player[i].life));
+
+    }
+    w_file.close();
+   
+}
+void load(std::string path,PERSON Player[])
+{
+    std::ifstream r_file(path, std::ios::binary | std::ios::in);
+    if (!r_file.is_open())
+    {
+        std::cerr << "r_file is NOT OPEN!";
+        return;
+    }
+    for (int i = 0; i < 7; i++)
+    {
+        int len= 0;
+        r_file.read((char*)len, sizeof len);
+        Player[i].name.resize(len);           // в данном случае нужно ли ресайзать name ??
+        r_file.read((char*)Player[i].name.c_str(), len);
+
+        r_file.read((char*)Player[i].health, sizeof(Player[i].health));
+
+        r_file.read((char*)Player[i].armor, sizeof(Player[i].armor));
+
+        r_file.read((char*)Player[i].damage, sizeof(Player[i].damage));
+
+        r_file.read((char*)Player[i].x, sizeof(Player[i].x));
+
+        r_file.read((char*)Player[i].y, sizeof(Player[i].y));
+
+        r_file.read((char*)Player[i].move, sizeof(Player[i].move));
+
+        r_file.read(reinterpret_cast<char*>(&Player[i].life), sizeof(Player[i].life));
+
+    }
+    r_file.close();
+}
 
 int main()
 {
+    std::string path = " game.bin";
+
+    std::ofstream w_file(path, std::ios::binary | std::ios::out);
+    if (!w_file.is_open())
+    {
+        std::cout << "FILE IS NOT OPEN!";
+    }
+    w_file.close();
+
     setlocale(LC_ALL, "RUS");
     srand(time(NULL));                               // для генерации случайных чисел
 
@@ -240,7 +315,7 @@ int main()
 
     // создаем  врагов
     
-    for(int i = 1 ;i < 6; i++)
+    for(int i = 1 ;i < 7; i++)
     {
         Player[i].name += std::to_string(i);
         Player[i].armor = rand() % 51;
@@ -250,46 +325,59 @@ int main()
         Player[i].y = rand() % 20;
     }
     Kartinka(Game_field, Player);                      // вывод поля на экран ( показ картинки)
-     
+
+    save(path, Player);                                // сохраняем данные 
+   
     while (Player[0].life || (Player[1].life && Player[2].life && Player[3].life && Player[4].life && Player[5].life))  // игра началась
 {
-    char move_char;                                  // символ перемещения
+        char* move_char = "end";                                  // символ перемещения
     std::cout << " введи передвижение: ";
     std::cin >> move_char;                           // ввод перемещения героя
 
-    Player[6] = Player[0];                           // приравниваем временного персонажа к герою
-    REPLACEMENT(move_char, Player);                  // заполняем переменную Player[6].move  REPLACEMENT - замена  (буквы на цифру)
-    MOVEMENT(Player);                               // передвижение персонажей
-    HERO_DAMAGE(Player);                             // проверка на сближение и нанесение урона
-   
-    ENEMY_MOVE(Player);                              //  создаем случайное  перемещение врагов и тут же  передвижение и урон 
-    MOVEMENT( Player);                               // передвижение персонажей
-  
-    Player[0].Get();
-    std::cout << std::endl;
-    Player[1].Get();
-    std::cout << std::endl;
-    Player[2].Get();
-    std::cout << std::endl;
-    Player[3].Get();
-    std::cout << std::endl;
-    Player[4].Get();
-    std::cout << std::endl;
-    Player[5].Get();
-    std::cout << std::endl;
+    if (move_char == "save")                         // если ввели save - сохраняем данные
+    {
+        save(path, Player);
+    }
+    else if (move_char == "load")                    // если ввели load - загружаем данные
+    {
+        load(path, Player);
+    }
+    else
+    {
+        Player[6] = Player[0];                           // приравниваем временного персонажа к герою
+        REPLACEMENT(move_char, Player);                  // заполняем переменную Player[6].move  REPLACEMENT - замена  (буквы на цифру)
+        MOVEMENT(Player);                               // передвижение персонажей
+        HERO_DAMAGE(Player);                             // проверка на сближение и нанесение урона
 
-    Kartinka(Game_field, Player);
-    
-    std::cout << std::endl;
-}
-if (Player[0].life)
-{
-    std::cout << "YOU Win!";
-}
-else
-{
-    std::cout << "You LOSE!!!";
-}
+        ENEMY_MOVE(Player);                              //  создаем случайное  перемещение врагов и тут же  передвижение и урон 
+        MOVEMENT(Player);                               // передвижение персонажей
+
+        Player[0].Get();
+        std::cout << std::endl;
+        Player[1].Get();
+        std::cout << std::endl;
+        Player[2].Get();
+        std::cout << std::endl;
+        Player[3].Get();
+        std::cout << std::endl;
+        Player[4].Get();
+        std::cout << std::endl;
+        Player[5].Get();
+        std::cout << std::endl;
+
+        Kartinka(Game_field, Player);
+
+        std::cout << std::endl;
+    }
+    if (Player[0].life)
+    {
+        std::cout << "YOU Win!";
+    }
+    else
+    {
+        std::cout << "You LOSE!!!";
+    }
+    }
 }
 
 
