@@ -40,6 +40,77 @@ struct PERSON
         std::cout << "name: " << name << "\nhealth: " << health << "\narmor:" << armor << "\ndamage: " << damage << "\ncoordinates: " << x << ',' << y << "\nLIFE: "<< life<< std::endl;
     }
 };
+
+void save(std::string path, PERSON Player[])
+{
+    std::ofstream w_file(path, std::ios::binary | std::ios::out); // запись в бинарный файл
+    if (!w_file.is_open())
+    {
+        std::cerr << "FILE IS NOT OPEN!";
+        return;
+    }
+    for (int i = 0; i < 7; i++)
+    {
+        int len = Player[i].name.length();
+        w_file.write((char*)&len, sizeof(int));
+        w_file.write(Player[i].name.c_str(), len);
+
+        w_file.write((char*)&Player[i].health, sizeof(Player[i].health));
+
+        w_file.write((char*)&Player[i].armor, sizeof(Player[i].armor));
+
+        w_file.write((char*)&Player[i].damage, sizeof(Player[i].damage));
+
+        w_file.write((char*)&Player[i].x, sizeof(Player[i].x));
+
+        w_file.write((char*)&Player[i].y, sizeof(Player[i].y));
+
+        w_file.write((char*)&Player[i].move, sizeof(Player[i].move));
+
+        w_file.write(reinterpret_cast<char*>(&Player[i].life), sizeof(Player[i].life));
+
+    }
+    w_file.close();
+
+}
+void load(std::string path, PERSON Player[])
+{
+    std::ifstream r_file(path, std::ios::binary | std::ios::in);
+    if (!r_file.is_open())
+    {
+        std::cerr << "r_file is NOT OPEN!";
+        return;
+    }
+    
+        for (int i = 0; i < 7; i++)
+        {
+            int len = 0;
+            r_file.read((char*)len, sizeof len);
+            Player[i].name.resize(len);           // в данном случае нужно ли ресайзать name ??
+            r_file.read((char*)Player[i].name.c_str(), len);
+            if (r_file.eof())
+            {
+                return;
+            }
+            r_file.read((char*)Player[i].health, sizeof(Player[i].health));
+
+            r_file.read((char*)Player[i].armor, sizeof(Player[i].armor));
+
+            r_file.read((char*)Player[i].damage, sizeof(Player[i].damage));
+
+            r_file.read((char*)Player[i].x, sizeof(Player[i].x));
+
+            r_file.read((char*)Player[i].y, sizeof(Player[i].y));
+
+            r_file.read((char*)Player[i].move, sizeof(Player[i].move));
+
+            r_file.read(reinterpret_cast<char*>(&Player[i].life), sizeof(Player[i].life));
+
+        }
+    
+    r_file.close();
+}
+
 void FILLING(char Game_field[][20])                      // Заполнение игрового поля точками(ОБНУЛЕНИЕ КАРТИНКИ) ! очень часто используемая функция
 {
     for (int i = 0; i < 20; ++i)          
@@ -76,27 +147,39 @@ void DISPLAY_FIELD(char Game_field[][20])               // (КАРТИНКА) в
     }
 };
 
-void REPLACEMENT(char* move_char, PERSON Player[])      // функция перемещения меняет буквы на цифры лдя дальнейшего перемещения
+void REPLACEMENT(std::string move_char, PERSON Player[],std::string path)      // функция перемещения меняет буквы на цифры лдя дальнейшего перемещения
 {
-
-    switch (move_char[0])
+    if (move_char == "w")
     {
-    case 'w':
-       Player[6].move = 0;
-        break;
-    case 's':
-        Player[6].move = 2;
-        break;
-    case 'a':
-        Player[6].move = 1;
-        break;
-    case 'd':
-        Player[6].move = 3;
-        break;
-    default:
-        std::cout << "Неверная команда передвижения";
-        break;
+        Player[6].move = 0;
+        return;
     }
+    if (move_char == "s")
+    {
+        Player[6].move = 2;
+        return;
+    }
+    if (move_char == "a")
+    {
+        Player[6].move = 1;
+        return;
+    }
+    if (move_char == "d")
+    {
+        Player[6].move = 3;
+        return;
+    }
+    if (move_char == "save")
+    {
+        save(path, Player);;
+        return;
+    }
+    if (move_char == "load")
+    {
+        load(path, Player);
+        return;
+    }
+
 }
 
 void MOVEMENT(PERSON Player[])  // ПЕРЕДВИЖЕНИЕ ПЕРСОНАЖЕЙ 
@@ -111,7 +194,7 @@ void MOVEMENT(PERSON Player[])  // ПЕРЕДВИЖЕНИЕ ПЕРСОНАЖЕЙ
             {
                 Player[i].y = 0;
             }
-            Player[i].move = 4;   // ЧЕ НАПИСАЛ?? ЗАЧЕМ ЭТО ?? Я НЕ ПОМНЮ... АА.. чтобы персонаж делал один ход!!!!
+            Player[i].move = 4;   //  чтобы персонаж делал один ход!!!!
             break;
 
         case 1:
@@ -167,8 +250,7 @@ void ENEMY_MOVE(PERSON Player[])                    //перемещение в�
             MOVEMENT( Player);                    // передвижение персонажa
 
 
-            if ((Player[0].x - Player[6].x == 0) && (Player[0].y - Player[6].y == 0))
-            {
+            if ((Player[0].x - Player[6].x == 0) && (Player[0].y - Player[6].y == 0)) // проверка находятся ли в одной точке герой и враг
                 Player[0].armor -= Player[6].damage;
                 if (Player[0].armor < 0)
                 {
@@ -179,14 +261,14 @@ void ENEMY_MOVE(PERSON Player[])                    //перемещение в�
                         Player[0].life = false;
                     }
                 }
-            }
+        }
             else
             {
                 Player[i] = Player[6];
             }
-        }
     }
 }
+
 
 void HERO_DAMAGE(PERSON Player[])
 {
@@ -208,75 +290,12 @@ void HERO_DAMAGE(PERSON Player[])
                 }
                 return;                                                                  // если сближение произошло выходим из функции
             }
-        }     
+        }
     }
     Player[0] = Player[6];                                                           // если персонажи не сблизились, то временная переменная передает герою координаты передвижения, и он ходит
 }
 
-void save(std::string path, PERSON Player[])
-{
-    std::ofstream w_file(path, std::ios::binary | std::ios::out); // запись в бинарный файл
-    if (!w_file.is_open())
-    {
-        std::cerr << "FILE IS NOT OPEN!";
-        return;
-    }
-    for (int i = 0; i < 7; i++)
-    {
-        int len = Player[i].name.length();
-        w_file.write((char*)&len, sizeof(int));
-        w_file.write(Player[i].name.c_str(), len);
 
-        w_file.write((char*)&Player[i].health, sizeof(Player[i].health));
-
-        w_file.write((char*)&Player[i].armor, sizeof(Player[i].armor));
-
-        w_file.write((char*)&Player[i].damage, sizeof(Player[i].damage));
-
-        w_file.write((char*)&Player[i].x, sizeof(Player[i].x));
-
-        w_file.write((char*)&Player[i].y, sizeof(Player[i].y));
-
-        w_file.write((char*)&Player[i].move, sizeof(Player[i].move));
-
-        w_file.write(reinterpret_cast<char*>(&Player[i].life), sizeof(Player[i].life));
-
-    }
-    w_file.close();
-   
-}
-void load(std::string path,PERSON Player[])
-{
-    std::ifstream r_file(path, std::ios::binary | std::ios::in);
-    if (!r_file.is_open())
-    {
-        std::cerr << "r_file is NOT OPEN!";
-        return;
-    }
-    for (int i = 0; i < 7; i++)
-    {
-        int len= 0;
-        r_file.read((char*)len, sizeof len);
-        Player[i].name.resize(len);           // в данном случае нужно ли ресайзать name ??
-        r_file.read((char*)Player[i].name.c_str(), len);
-
-        r_file.read((char*)Player[i].health, sizeof(Player[i].health));
-
-        r_file.read((char*)Player[i].armor, sizeof(Player[i].armor));
-
-        r_file.read((char*)Player[i].damage, sizeof(Player[i].damage));
-
-        r_file.read((char*)Player[i].x, sizeof(Player[i].x));
-
-        r_file.read((char*)Player[i].y, sizeof(Player[i].y));
-
-        r_file.read((char*)Player[i].move, sizeof(Player[i].move));
-
-        r_file.read(reinterpret_cast<char*>(&Player[i].life), sizeof(Player[i].life));
-
-    }
-    r_file.close();
-}
 
 int main()
 {
@@ -328,24 +347,18 @@ int main()
 
     save(path, Player);                                // сохраняем данные 
    
-    while (Player[0].life || (Player[1].life && Player[2].life && Player[3].life && Player[4].life && Player[5].life))  // игра началась
-{
-        char* move_char = "end";                                  // символ перемещения
+    while (Player[0].life && (Player[1].life + Player[2].life + Player[3].life + Player[4].life + Player[5].life))  // игра началась
+    {
+        std::string move_char;                                  // строка перемещения
+        
+        
     std::cout << " введи передвижение: ";
+    
     std::cin >> move_char;                           // ввод перемещения героя
 
-    if (move_char == "save")                         // если ввели save - сохраняем данные
-    {
-        save(path, Player);
-    }
-    else if (move_char == "load")                    // если ввели load - загружаем данные
-    {
-        load(path, Player);
-    }
-    else
-    {
+    
         Player[6] = Player[0];                           // приравниваем временного персонажа к герою
-        REPLACEMENT(move_char, Player);                  // заполняем переменную Player[6].move  REPLACEMENT - замена  (буквы на цифру)
+        REPLACEMENT(move_char, Player,path);                  // заполняем переменную Player[6].move  REPLACEMENT - замена  (буквы на цифру)
         MOVEMENT(Player);                               // передвижение персонажей
         HERO_DAMAGE(Player);                             // проверка на сближение и нанесение урона
 
@@ -377,7 +390,7 @@ int main()
     {
         std::cout << "You LOSE!!!";
     }
-    }
+    
 }
 
 
