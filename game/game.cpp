@@ -94,7 +94,7 @@ void load(std::string path, PERSON Player[])                        // выле�
     }
     for (int i = 0; i < 7; i++)
     {
-        int len = 0;
+        int len ;
         r_file.read((char*)len, sizeof len);
         Player[i].name.resize(len);           // в данном случае нужно ли ресайзать name ??
         r_file.read((char*)Player[i].name.c_str(), len);
